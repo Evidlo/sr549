@@ -89,3 +89,87 @@ def _vectorize(signature='(m,n)->(i,j)', included=[0]):
     return decorator
 
 vectorize = _vectorize()
+
+
+
+def downsample(x, factor=2):
+    """
+    Downsample an image by averaging factor*factor sized patches.  Discards remaining pixels
+    on bottom and right edges
+
+    Args:
+        x (ndarray): input image to downsample
+        factor (int): factor to downsample image by
+
+    Returns:
+        ndarray containing downsampled image
+    """
+
+    return fftconvolve(
+        x,
+        np.ones((factor, factor)) / factor**2,
+        mode='valid'
+    )[::factor, ::factor]
+
+def downsample2(x, factor=2):
+    """
+    Downsample an image by average factor*factor sized patches.  
+
+    Args:
+        x (ndarray): input image to downsample
+        factor (int): factor to downsample image by
+
+    Returns:
+        ndarray containing downsampled image
+    """
+
+    X = np.fft.fftn(x)
+    kern = size_equalizer(np.ones((factor, factor)) / factor**2, x.shape)
+    kern = np.fft.fftshift(kern)
+    kern = np.fft.fftn(kern)
+    # -factor to prevent overlap from first kernel pos to last kernel pos
+    # return np.fft.ifftn(kern * X)[:-factor:factor, :-factor:factor]
+    return np.fft.ifftn(kern * X)[::factor, ::factor]
+
+@vectorize
+def size_equalizer(x, ref_size, mode='center'):
+    """
+    Crop or zero-pad a 2D array so that it has the size `ref_size`.
+    Both cropping and zero-padding are done such that the symmetry of the
+    input signal is preserved.
+    Args:
+        x (ndarray): array which will be cropped/zero-padded
+        ref_size (list): list containing the desired size of the array [r1,r2]
+        mode (str): ('center', 'topleft') where x should be placed when zero padding
+    Returns:
+        ndarray that is the cropper/zero-padded version of the input
+    """
+    assert len(x.shape) == 2, "invalid shape for x"
+
+    if x.shape[0] > ref_size[0]:
+        pad_left, pad_right = 0, 0
+        crop_left = 0 if mode == 'topleft' else (x.shape[0] - ref_size[0] + 1) // 2
+        crop_right = crop_left + ref_size[0]
+    else:
+        crop_left, crop_right = 0, x.shape[0]
+        pad_right = ref_size[0] - x.shape[0] if mode == 'topleft' else (ref_size[0] - x.shape[0]) // 2
+        pad_left = ref_size[0] - pad_right - x.shape[0]
+    if x.shape[1] > ref_size[1]:
+        pad_top, pad_bottom = 0, 0
+        crop_top = 0 if mode == 'topleft' else (x.shape[1] - ref_size[1] + 1) // 2
+        crop_bottom = crop_top + ref_size[1]
+    else:
+        crop_top, crop_bottom = 0, x.shape[1]
+        pad_bottom = ref_size[1] - x.shape[1] if mode == 'topleft' else (ref_size[1] - x.shape[1]) // 2
+        pad_top = ref_size[1] - pad_bottom - x.shape[1]
+
+    # crop x
+    cropped = x[crop_left:crop_right, crop_top:crop_bottom]
+    # pad x
+    padded = np.pad(
+        cropped,
+        ((pad_left, pad_right), (pad_top, pad_bottom)),
+        mode='constant'
+    )
+
+    return padded
