@@ -29,3 +29,9 @@ frames_noisy = add_noise(frames, dbsnr=-10)
 
 # %% Output is normalized. size:lr_size * factor
 z = hmrf(frames_noisy,f,dbsnr=-10)
+
+scene_norm = scene[:f.lr_size[0] * f.factor, :f.lr_size[1] * f.factor]
+scene_norm = scene_norm / scene_norm.max()
+
+print('PSNR:', compare_psnr(truth=scene_norm, estimate=z))
+print('SSIM:', compare_ssim(truth=scene_norm, estimate=z))
