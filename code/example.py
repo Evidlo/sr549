@@ -29,8 +29,6 @@ scene = scene[:f.hr_size[0], :f.hr_size[1]]
 # propagate scene through system and reshape
 frames = f.forward @ scene.flatten()
 frames = frames.reshape(f.num_frames, *f.lr_size)
-# FIXME: weight matrix is transposed
-frames = frames.transpose(0, 2, 1)
 
 # add noise to frames
 frames_noisy = add_noise(frames, dbsnr=-10)

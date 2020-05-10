@@ -66,15 +66,15 @@ class Forward(object):
 
         kernel_r, kernel_c = np.where(self.kernel)
 
-        import ipdb
-        ipdb.set_trace()
+        # import ipdb
+        # ipdb.set_trace()
 
         # ----- copy motion kernel to all positions -----
 
         rows = []
         for sc, sr in tqdm(starts, desc='frame'):
-            for c in np.arange(0, factor * lr_size[1], factor):
-                for r in np.arange(0, factor * lr_size[0], factor):
+            for r in np.arange(0, factor * lr_size[0], factor):
+                for c in np.arange(0, factor * lr_size[1], factor):
                     pixel_segments = csr_matrix(
                         (
                             np.ones(len(kernel_r)),
