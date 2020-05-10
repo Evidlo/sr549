@@ -168,28 +168,3 @@ def video(*, scene, resolution_ratio, frame_rate, exp_time, drift_angle,
 
     return frames, mid
 
-@vectorize
-def add_noise(signal, dbsnr=None):
-    """
-    Add noise to the given signal at the specified level.
-
-    Args:
-        (ndarray): noise-free input signal
-        dbsnr (float): signal to noise ratio in dB: for Gaussian noise model, it is
-        defined as the ratio of variance of the input signal to the variance of
-        the noise. For Poisson model, it is taken as the average snr where snr
-        of a pixel is given by the square root of its value.
-        max_count (int): Max number of photon counts in the given signal
-        model (string): String that specifies the noise model. The 2 options are
-        `Gaussian` and `Poisson`
-        no_noise (bool): (default=False) If True, return the clean signal
-
-    Returns:
-        ndarray that is the noisy version of the input
-    """
-    if dbsnr is None:
-        return signal
-    else:
-        var_sig = np.var(signal)
-        var_noise = var_sig / 10**(dbsnr / 10)
-        return np.random.normal(loc=signal, scale=np.sqrt(var_noise))

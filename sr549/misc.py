@@ -1,5 +1,6 @@
 import numpy as np
 from functools import wraps
+import inspect
 
 def crop(im, center=None, *, width):
     """
@@ -227,3 +228,23 @@ def roll(x, shift):
         result = np.roll(result, shift[axis], axis=axis)
 
     return result
+
+def store_kwargs(func):
+    """
+    Apply to any class __init__ to automatically store all kwargs inside the class
+    https://stackoverflow.com/questions/1389180/automatically-initialize-instance-variables
+    """
+    names, varargs, keywords, defaults = inspect.getargspec(func)
+
+    @wraps(func)
+    def wrapper(self, *args, **kargs):
+        for name, arg in list(zip(names[1:], args)) + list(kargs.items()):
+            setattr(self, name, arg)
+
+        for name, default in zip(reversed(names), reversed(defaults)):
+            if not hasattr(self, name):
+                setattr(self, name, default)
+
+        func(self, *args, **kargs)
+
+    return wrapper

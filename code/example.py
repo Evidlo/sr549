@@ -3,31 +3,53 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sr549.forward import forward
+from sr549.forward import Forward, add_noise
 from sr549.data import scene
+from sr549.registration import registration, shift_and_sum
 
-# %% weights
+# %% forward
 
-hr_size = (500, 500)
-lr_size = (50, 50)
-num_frames = 10
-
-scene = scene[:500, :500]
-
-w = forward(
+f = Forward(
     drift_angle=45,
-    drift_velocity=3,
+    drift_velocity=1,
     frame_rate=4,
-    num_frames=num_frames,
-    lr_size=lr_size,
-    hr_size=hr_size,
+    num_frames=40,
+    lr_size=(100, 100),
+    hr_size=(500, 500),
     factor=4
 )
 
-# %% frames
+# %% register
 
-frames = w @ scene.flatten()
+# crop scene to proper input size
+scene = scene[:f.hr_size[0], :f.hr_size[1]]
 
-frames = frames.reshape(num_frames, *lr_size)
+# propagate scene through system and reshape
+frames = f.forward @ scene.flatten()
+frames = frames.reshape(f.num_frames, *f.lr_size)
 
+# add noise to frames
+frames_noisy = add_noise(frames, dbsnr=-10)
+
+est_drift = registration(frames) * f.factor
+print('true_drift:', f.true_drift, 'px')
+print('est_drift:', est_drift, 'px')
+print('err:', np.linalg.norm(est_drift - f.true_drift), 'px')
+
+recon = shift_and_sum(frames, f.true_drift / f.factor)
+
+# %% plot
+
+plt.close()
+plt.subplot(1, 3, 1)
 plt.imshow(frames[0])
+plt.title('Clean Frame')
+plt.subplot(1, 3, 2)
+plt.imshow(frames_noisy[0])
+plt.title('Noisy Frame')
+plt.subplot(1, 3, 3)
+plt.imshow(recon)
+plt.title('Coadded Registered Frames')
+
+plt.tight_layout()
+plt.show()
