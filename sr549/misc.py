@@ -1,6 +1,10 @@
 import numpy as np
 from functools import wraps
 import inspect
+from skimage.metrics import structural_similarity as skimage_ssim
+from skimage.metrics import peak_signal_noise_ratio as skimage_psnr
+import numpy as np
+
 
 def crop(im, center=None, *, width):
     """
@@ -23,17 +27,15 @@ def crop(im, center=None, *, width):
     if center is None:
         center = (im.shape[0] // 2, im.shape[1] // 2)
 
-    assert (
-        (0 <= center[0] - width[0]) and
-        (0 <= center[1] - width[1]) and
-        (im.shape[0] >= center[0] + width[0]) and
-        (im.shape[1] >= center[1] + width[1])
-    ), "Cropped region falls outside image bounds"
-
     crop_left = (im.shape[0] - width[0] + 1) // 2
     crop_right = crop_left + width[0]
     crop_top = (im.shape[1] - width[1] + 1) // 2
     crop_bottom = crop_top + width[1]
+
+    assert (
+        (0 <= crop_left) and (0 <= crop_top) and
+        (im.shape[0] >= crop_right) and (im.shape[1] >= crop_bottom)
+    ), "Cropped region falls outside image bounds"
 
     return im[crop_left:crop_right, crop_top:crop_bottom]
 
@@ -248,3 +250,34 @@ def store_kwargs(func):
         func(self, *args, **kargs)
 
     return wrapper
+
+
+@vectorize
+def upsample(x, factor=2):
+    """
+    Upsample an image by turning 1 pixel into a factor*factor sized patch
+
+    Args:
+        x (ndarray): input image to upsample
+        factor (int): factor to upsample image by
+
+    Returns:
+        ndarray containing upsampled image
+    """
+
+    return np.repeat(
+        np.repeat(
+            x,
+            repeats=factor,
+            axis=0
+        ),
+        repeats=factor,
+        axis=1
+    )
+
+# @_vectorize(signature='(a,b),(c,d)->()', included=['truth', 'estimate'])
+def compare_ssim(*, truth, estimate):
+    return skimage_ssim(estimate, truth, data_range=np.max(truth) - np.min(truth))
+
+def compare_psnr(*, truth, estimate):
+    return skimage_psnr(estimate, truth, data_range=np.max(truth) - np.min(truth))

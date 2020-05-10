@@ -41,7 +41,7 @@ def shift_and_sum(frames, drift, mode='full', shift_method='roll'):
         frames (ndarray): input frames to coadd
         drift (ndarray): drift between adjacent frames
         mode (str): zeropad before coadding ('full') or crop to region of
-            frame overlap ('crop')
+            frame overlap ('crop'), or crop to region of first frame ('first')
         shift_method (str): method for shifting frames ('roll', 'fourier')
         pad (bool): zeropad images before coadding
 
@@ -57,15 +57,15 @@ def shift_and_sum(frames, drift, mode='full', shift_method='roll'):
         ((0, 0), pad_r, pad_c),
         mode='constant'
     )
-    frames = np.pad(frames, ((0, 0), pad_r, pad_c), mode='constant')
+    frames_pad = np.pad(frames, ((0, 0), pad_r, pad_c), mode='constant')
 
-    summation = np.zeros(frames[0].shape, dtype='complex128')
+    summation = np.zeros(frames_pad[0].shape, dtype='complex128')
     summation_scale = np.copy(summation)
 
     # import ipdb
     # ipdb.set_trace()
 
-    for time_diff, (frame, frame_ones) in enumerate(zip(frames, frames_ones)):
+    for time_diff, (frame, frame_ones) in enumerate(zip(frames_pad, frames_ones)):
         shift = np.array(drift) * (time_diff + 1)
         if shift_method == 'roll':
             integer_shift = np.round(shift).astype(int)
@@ -88,15 +88,18 @@ def shift_and_sum(frames, drift, mode='full', shift_method='roll'):
     if mode == 'crop':
         summation = size_equalizer(
             summation,
-            np.array(frames[0].shape).astype(int) -
-            2 * np.ceil(drift * (len(frames)-1)).astype(int)
+            np.array(frames_pad[0].shape).astype(int) -
+            2 * np.ceil(drift * (len(frames_pad)-1)).astype(int)
         )
     elif mode == 'full':
-        summation /= ma.masked_where(summation_scale == 0, summation_scale)
+        summation /= summation_scale
+    elif mode == 'first':
+        summation /= summation_scale
+        summation = summation[1:frames.shape[1] + 1, 1:frames.shape[2] + 1]
     else:
         raise Exception('Invalid mode')
 
-    return summation.real
+    return ma.masked_where(np.isnan(summation), summation).real
 
 
 def registration(frames):
