@@ -81,7 +81,7 @@ class Forward(object):
                     )
                     rows.append(pixel_segments.reshape(1, -1))
 
-        self.forward = vstack(rows)
+        self.forward = vstack(rows).tocsr()
 
 
 @vectorize
