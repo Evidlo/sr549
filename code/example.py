@@ -28,6 +28,6 @@ w = forward(
 
 frames = w @ scene.flatten()
 
-frames = frames.reshape(*lr_size, num_frames)
+frames = frames.reshape(num_frames, *lr_size)
 
 plt.imshow(frames[0])
