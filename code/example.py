@@ -7,13 +7,14 @@ from sr549.forward import Forward, add_noise
 from sr549.data import scene
 from sr549.registration import registration, shift_and_sum
 from sr549.misc import crop, compare_ssim, compare_psnr
+from sr549.misc import upsample
 from skimage.transform import rescale
 
 # %% forward
 
 f = Forward(
     drift_angle=45,
-    drift_velocity=4,
+    drift_velocity=1,
     frame_rate=4,
     num_frames=40,
     lr_size=np.array((100, 100)),
