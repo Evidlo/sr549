@@ -1,4 +1,6 @@
 import numpy as np
+from sr549.misc import np_gpu
+from tqdm import tqdm
 
 @np_gpu(np_args=[0])
 def correlate_and_sum(frames, mode='CC', np=np):
@@ -29,18 +31,6 @@ def correlate_and_sum(frames, mode='CC', np=np):
 
     return np.fft.ifftn(np.array(product_sums), axes=(1, 2))
 
-
-def roll(x, shift):
-    shift = np.round(shift).astype(int)
-    return np.roll(
-        np.roll(
-            x,
-            shift[0],
-            axis=0
-        ),
-        shift[1],
-        axis=1
-    )
 
 def shift_and_sum(frames, drift, mode='full', shift_method='roll'):
     """Coadd frames by given shift

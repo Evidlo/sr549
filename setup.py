@@ -19,7 +19,8 @@ setup(
         'imageio',
         'scipy',
         'scikit-image',
-        'tqdm'
+        'tqdm',
+        'cachalot'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
