@@ -56,15 +56,18 @@ class Forward(object):
 
         # ----- create motion kernel -----
 
-        kernel = np.zeros(starts[1] - starts[0] + (factor, factor))
+        self.kernel = np.zeros(starts[1] - starts[0] + (factor, factor))
         if motion_blur:
             line_points = line(*starts[0], *starts[1])
         else:
             line_points = line(*starts[0], *starts[0])
         for r, c in zip(*line_points):
-            kernel[r:r + factor, c:c + factor] = np.ones((factor, factor))
+            self.kernel[r:r + factor, c:c + factor] = np.ones((factor, factor))
 
-        kernel_r, kernel_c = np.where(kernel)
+        kernel_r, kernel_c = np.where(self.kernel)
+
+        import ipdb
+        ipdb.set_trace()
 
         # ----- copy motion kernel to all positions -----
 
