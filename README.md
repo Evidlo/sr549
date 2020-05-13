@@ -1,5 +1,7 @@
 # ECE549 Super-resolution Project
 
+Project video is at `sr549/sr549.mp4`.
+
 ## Install
 
     pip install -e .
